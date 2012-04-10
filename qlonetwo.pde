@@ -1,5 +1,6 @@
+
 /*
-   Copyright 2009 Marcus Liang
+   Copyright 2009 Marcus Liang, Robert Gill
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -13,13 +14,19 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-
+  ***Original build from Marcus***
   Arduino Code for QlockTwo Clone
   http://www.flickr.com/photos/19203306@N00/sets/72157622998814956/ 
  
+ ***New build for a smaller clock***
+ http://makeprojects.com/Project/Small-Word-Clock/2135
+ 
  */
-
-#include <WProgram.h>
+ #if defined(ARDUINO) && ARDUINO >= 100
+  #include "Arduino.h"
+  #else
+  #include "WProgram.h"
+  #endif
 #include <Wire.h>
 #include <DS1307.h>  
 #include <LedControl.h>
@@ -83,6 +90,9 @@ void setup(void) {
   pinMode (BUT3, INPUT);
   pinMode (BUT4, INPUT);
 
+  //Set the serial for testing output and button presses
+  Serial.begin(9600);
+
   // turn on LED controller;
   LC1.shutdown(0,false);
   LC2.shutdown(0,false);
@@ -105,8 +115,14 @@ void loop(void) {
   int but3read = digitalRead(BUT3);
   int but4read = digitalRead(BUT4);
 
+  //LED_TEST();
+  //LC1SingleTest();
+  //LC2SingleTest();
+  //vocabSingleTest();
+  
   if ((but1read == HIGH) && ((millis() - but1LastPress) > buttonPressDelay)) {
     but1LastPress = millis();
+    Serial.println("Button 1");
     doButton1();
   }
   else if ((but1read == LOW) && ((millis() - but1LastPress) > buttonPressDelay ))
@@ -114,6 +130,7 @@ void loop(void) {
   
   if ((but2read == HIGH) && ((millis() - but2LastPress) > buttonPressDelay)) {
     but2LastPress = millis();
+    Serial.println("Button 2");
     doButton2();
   }
   else if ((but2read == LOW) && ((millis() - but2LastPress) > buttonPressDelay ))
@@ -121,6 +138,7 @@ void loop(void) {
 
   if ((but3read == HIGH) && ((millis() - but3LastPress) > buttonPressDelay)) {
     but3LastPress = millis();
+    Serial.println("Button 3");
     doButton3();
   }
   else if ((but3read == LOW) && ((millis() - but3LastPress) > buttonPressDelay ))
@@ -129,6 +147,7 @@ void loop(void) {
 
   if ((but4read == HIGH) && ((millis() - but4LastPress) > buttonPressDelay)) {
     but4LastPress = millis();
+    Serial.println("Button 4");
     doButton4();
   }
   else if ((but4read == LOW) && ((millis() - but4LastPress) > buttonPressDelay ))
@@ -168,6 +187,8 @@ void doButton1() {
   int hour = RTC.get(DS1307_HR,true);
   if (hour == 23) hour = 0;
   else hour = hour + 1;
+  Serial.print("Hour: ");
+  Serial.println(hour);
   RTC.set(DS1307_HR,hour);
 }
 
@@ -177,6 +198,8 @@ void doButton2() {
   if (min == 59) min = 0;
   else min = min+1;
   RTC.set(DS1307_MIN,min);
+  Serial.print("Min: ");
+  Serial.println(min);
   RTC.set(DS1307_SEC,0);              // always zero the seconds.
 }
 
@@ -310,7 +333,7 @@ void mode_defaultsec() {
            if (tHour > 12) tHour = tHour - 12;
            else if (tHour == 0) tHour = 12;
   
-	   
+
 	   LED_CLEAR();
 	   W_ITIS();
   	   
@@ -325,18 +348,18 @@ void mode_defaultsec() {
 	   if (t5mins == 0)	W_OCLOCK();
 	   else if (t5mins > 30)	W_TO();
 	   else W_PAST();
-	   
+
 	   if (t5mins > 30)	{
 			tHour = tHour+1;
 			if (tHour > 12) tHour = 1;
 	   }
-		
+
 	   // light up the hour word
 	   if (tHour == 1) H_ONE(); else if (tHour == 2) H_TWO(); else if (tHour == 3) H_THREE(); else if (tHour == 4) H_FOUR();
 	   else if (tHour == 5) H_FIVE(); else if (tHour == 6) H_SIX(); else if (tHour == 7) H_SEVEN(); else if (tHour == 8) H_EIGHT();
 	   else if (tHour == 9) H_NINE(); else if (tHour == 10) H_TEN(); else if (tHour == 11) H_ELEVEN(); else if (tHour == 12) H_TWELVE();
 	}
-	
+
 	if (sec != cSec) {
 		// update the seconds;
 		//P_CLEAR();
@@ -348,35 +371,35 @@ void mode_defaultsec() {
 		// 0-4,   5-9,   10-14, 15-19 then repeat.
 		// 20-24, 25-29, 30-34, 35-39
 		// 40-44, 45-49, 50-54, 55-59
-	
+
 		if (((sec > 0) && (sec < 5)) || ((sec > 20) && (sec < 25)) || ((sec > 40) && (sec < 45))) {
 			if (r == 1) { P_ONE(); }
 			else if (r == 2) {  P_ONE();  P_TWO(); }
 			else if (r == 3) {  P_ONE(); P_TWO();  P_THREE();}
 			else if (r == 4) {  P_ONE(); P_TWO(); P_THREE(); P_FOUR();}
 		}
-	
+
 		else if (((sec > 5) && (sec < 10)) || ((sec > 25) && (sec < 30)) || ((sec > 45) && (sec < 50))) {
 			if (r == 1) { P_TWO(); }
 			else if (r == 2) { P_TWO(); P_THREE(); }
 			else if (r == 3) { P_TWO(); P_THREE(); P_FOUR();}
 			else if (r == 4) { P_TWO(); P_THREE(); P_FOUR(); P_ONE();}
 		}
-		
+
 		else if (((sec > 10) && (sec < 15)) || ((sec > 30) && (sec < 35)) || ((sec > 50) && (sec < 55)))  {
 			if (r == 1) { P_THREE(); }
 			else if (r == 2) { P_THREE(); P_FOUR(); }
 			else if (r == 3) { P_THREE(); P_FOUR(); P_ONE();}
 			else if (r == 4) { P_THREE(); P_FOUR(); P_ONE(); P_TWO();}
 		}
-				
+
 		else if (((sec > 15) && (sec < 20)) || ((sec > 35) && (sec < 40)) || ((sec > 55) && (sec < 60)))  {
 			if (r == 1) { P_FOUR(); }
 			else if (r == 2) { P_FOUR(); P_ONE(); }
 			else if (r == 3) { P_FOUR(); P_ONE(); P_TWO();}
 			else if (r == 4) { P_FOUR(); P_ONE(); P_TWO(); P_THREE();}
 		}
-		
+
 		else if ((r == 0)  || (r == 5)) {
     		      P_CLEAR();
 		}
@@ -419,7 +442,7 @@ void mode_seconds() {
    }  
    
    // seconds have changed, draw the seconds.
-	
+
 	tsec = tsec % 10;
 
 	if (tsec == 0) R_ZERO();
@@ -476,7 +499,306 @@ void mode_seconds() {
   ------------------------------------
   [dp,5]                         [g,5]
  
+The following layout works for the home-brew PCB 
+
+  [dp,0]                         [dp,4]
+  -----------------------------------
+   c | e|dp| d| g| b| f| a| 6| 4| 0
+  2                       |         d
+  3                       |         g
+  7                       |         b
+  5                       |         f
+  1                       |         a
+  -----------------------------------
+    c| e|dp| d| g| b| f| a| 4| 1| 0
+  6                       |         d
+  2                       |         g
+  3                       |         b
+  7                       |         f
+  5                       |         a
+  ------------------------------------
+  [c,1]                         [c,0]  
+ 
 */
+
+/* 
+ Set all 8 Led's in a row to a new state
+ Params:
+ addr  address of the display
+ row   row which is to be set (0..7)
+ value each bit set to 1 will light up the corresponding Led.
+ void setRow(int addr, int row, byte value);
+ 
+ Set all 8 Led's in a column to a new state
+ Params:
+ addr  address of the display
+ col   column which is to be set (0..7)
+ value each bit set to 1 will light up the corresponding Led.
+ void setColumn(int addr, int col, byte value);
+ 
+ Set the status of a single Led.
+ Params :
+ addr  address of the display 
+ row   the row of the Led (0..7)
+ col   the column of the Led (0..7)
+ state If true the led is switched on, 
+ 	 if false it is switched off
+ void setLed(int addr, int row, int col, boolean state);
+ 
+*/
+
+//TEST SCRIPTS ONLY//
+void LED_TEST(){
+  
+  int dly = 800;
+  
+  LED_CLEAR;
+  LC1.setRow(0,2,B11111111);
+  LC1.setColumn(0,4,B10001010);
+  delay(dly);
+  LED_CLEAR;
+
+  LC1.setRow(0,3,B11111111);
+  LC1.setColumn(0,7,B10001010);
+  delay(dly);
+  LED_CLEAR;
+
+  LC1.setRow(0,7,B11111111);
+  LC1.setColumn(0,2,B10001010);
+  delay(dly);
+  LED_CLEAR;
+
+  LC1.setRow(0,5,B11111111);
+  LC1.setColumn(0,6,B10001010);
+  delay(dly);
+  LED_CLEAR;
+
+  LC1.setRow(0,1,B11111111);
+  LC1.setColumn(0,1,B10001010);
+  delay(dly);
+  LED_CLEAR;  
+  
+  
+  LC2.setRow(0,6,B11111111);
+  LC2.setColumn(0,5,B11001000);
+  delay(dly); 
+  LED_CLEAR;
+  
+  LC2.setRow(0,2,B11111111);
+  LC2.setColumn(0,7,B11001000);
+  delay(dly);
+  LED_CLEAR;
+  
+  LC2.setRow(0,3,B11111111);
+  LC2.setColumn(0,3,B11001000);
+  delay(dly);
+  LED_CLEAR;
+  
+  LC2.setRow(0,7,B11111111);
+  LC2.setColumn(0,6,B11001000);
+  delay(dly);
+  LED_CLEAR;
+  
+  LC2.setRow(0,5,B11111111);
+  LC2.setColumn(0,2,B11001000);
+  delay(dly);
+  LED_CLEAR;
+  
+  LC2.setLed(0,1,4,true);
+  delay(dly);
+  LC2.setLed(0,0,4,true);
+  delay(dly);
+  LED_CLEAR;
+
+  //Top left vorner
+  LC1.setLed(0,0,0,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  //Top right corner
+  LC1.setLed(0,4,0,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  //Bottom left corner
+  LC2.setLed(0,1,3,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  //Bottom right corner
+  LC2.setLed(0,0,3,true);
+  delay(dly);
+  LED_CLEAR();  
+}
+
+void LC1SingleTest() {
+  int dly = 500;
+  int r = 1;
+  int c = 1;
+
+  LED_CLEAR();
+  
+  //top left vorner
+  LC1.setLed(0,0,0,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  //top right corner
+  LC1.setLed(0,4,0,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC1.setLed(0,r,3,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC1.setLed(0,r,5,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC1.setLed(0,r,0,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC1.setLed(0,r,4,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC1.setLed(0,r,7,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC1.setLed(0,r,2,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC1.setLed(0,r,6,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC1.setLed(0,r,1,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC1.setLed(0,6,c,true);
+  delay(dly);
+  LED_CLEAR();  
+  
+  LC1.setLed(0,4,c,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC1.setLed(0,0,c,true);
+  delay(dly);
+  LED_CLEAR();
+	
+}
+
+
+void LC2SingleTest() {
+  int dly = 500;
+  int r = 6;
+  int c = 4;
+
+  LED_CLEAR();
+  
+  //bottom left vorner
+  LC2.setLed(0,1,3,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  //bottomright corner
+  LC2.setLed(0,0,3,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC2.setLed(0,r,3,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC2.setLed(0,r,5,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC2.setLed(0,r,0,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC2.setLed(0,r,4,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC2.setLed(0,r,7,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC2.setLed(0,r,2,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC2.setLed(0,r,6,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC2.setLed(0,r,1,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC2.setLed(0,4,c,true);
+  delay(dly);
+  LED_CLEAR();  
+  
+  LC2.setLed(0,1,c,true);
+  delay(dly);
+  LED_CLEAR();
+  
+  LC2.setLed(0,0,c,true);
+  delay(dly);
+  LED_CLEAR();
+	
+
+	//cycle through each LED for LC1
+	//for (r=0; r <= 7; r++){
+	//	for (c=0; c <= 7; c++){
+	//		LC1.setLed(0,r,c,true); 
+	//		delay(dly);
+	//		LED_CLEAR();
+	//	}
+	//}
+
+	//cycle through each LED for LC2
+	//for (r=0; r <= 7; r++){
+	//	for (c=0; c <= 7; c++){
+	//		LC2.setLed(0,r,c,true); 
+	//		delay(dly);
+	//		LED_CLEAR();
+	//	}
+	//}	
+	
+}
+
+void  ledAll(){
+  	
+  int r = 0;
+  	
+  //cycle through each row in LC1
+  for (r = 0; r <= 7; r++) {
+    LC1.setRow(0,r,B11111111);    
+    delay(500);
+    LED_CLEAR;    
+  }
+	
+	//cycle through each row in LC2
+	//for (r = 0; r <= 7; r++) {
+	//	LC2.setRow(0,r,B11111111);
+//
+//	}
+  
+  
+}
+
+//*********end test script***********
+
 
 // LED Turn on/off procedures
 void LED_CLEAR() {
@@ -484,318 +806,445 @@ void LED_CLEAR() {
   LC2.clearDisplay(0);
 }
 void R_CLEAR() {
+  LC1.setColumn(0,1,B00000000);
   LC1.setColumn(0,6,B00000000);
-  LC1.setColumn(0,7,B00000000);
-  LC1.setRow(0,5,B00000000);
-  LC1.setRow(0,6,B00000000);
-  LC1.setRow(0,7,B00000000);
+  LC1.setLed(0,6,4,false);
+  LC1.setLed(0,4,4,false);
+  LC1.setLed(0,0,4,false);
+  LC1.setLed(0,6,7,false);
+  LC1.setLed(0,4,7,false);
+  LC1.setLed(0,0,7,false);
+  LC1.setLed(0,6,2,false);
+  LC1.setLed(0,4,2,false);
+  LC1.setLed(0,0,2,false);
+  LC2.setColumn(0,1,B00000000);
   LC2.setColumn(0,6,B00000000);
-  LC2.setColumn(0,7,B00000000);
-  LC2.setRow(0,5,B00000000);
-  LC2.setRow(0,6,B00000000);
-  LC2.setRow(0,7,B00000000);
+  LC2.setLed(0,4,4,false);
+  LC2.setLed(0,1,4,false);
+  LC2.setLed(0,0,4,false);
+  LC2.setLed(0,4,7,false);
+  LC2.setLed(0,1,7,false);
+  LC2.setLed(0,0,7,false);
+  LC2.setLed(0,4,2,false);
+  LC2.setLed(0,1,2,false);
+  LC2.setLed(0,0,2,false);
   
 }
 
 void M_FIVE() {
-	LC1.setRow(0,2,B00000011); // FI
-	LC1.setLed(0,5,3, true); // V
-	LC1.setLed(0,6,3, true); // E
+	LC1.setRow(0,7,B01000010); // FI
+	LC1.setLed(0,6,2, true); // V
+	LC1.setLed(0,4,2, true); // E
 }
 void M_TEN() {
-	LC1.setRow(0,3,B00000111);
+	LC1.setRow(0,5,B01100010);
 }
 void M_AQUARTER() {
-	LC1.setRow(0,1,B10111111); // A QUARTE
-	LC1.setLed(0,5,4, true); // R
+	LC1.setRow(0,3,B11111011); // A QUARTE
+	LC1.setLed(0,6,7, true); // R
 }
 void M_TWENTY() {
-	LC1.setRow(0,2,B11111100); // TWENTY
+	LC1.setRow(0,7,B10111101); // TWENTY
 }
 void M_TWENTYFIVE() {
-	LC1.setRow(0,2,B11111111); // TWENTYFI
-	LC1.setLed(0,5,3, true); // V
-	LC1.setLed(0,6,3, true); // E
+	LC1.setRow(0,7,B11111111); // TWENTYFI
+	LC1.setLed(0,6,2, true); // V
+	LC1.setLed(0,4,2, true); // E
 }
 void M_HALF() {
-	LC1.setRow(0,3,B11110000); // HALF
+	LC1.setRow(0,5,B10011100); // HALF
 }
 void W_ITIS() {
 	// Row0 "IT IS" (R0=216) OO.OO.......
-	LC1.setRow(0,0,B11011000);  // IT IS
+	LC1.setRow(0,2,B00011101);  // IT IS
 }
 void W_OCLOCK() {
-	LC2.setLed(0,4,5,true); // O'
-	LC2.setLed(0,4,6,true); // C
-	LC2.setLed(0,4,7,true);	// L
-	LC2.setLed(0,5,1,true); // O
-	LC2.setLed(0,6,1,true); // C
-	LC2.setLed(0,7,1,true);	// K
+	LC2.setLed(0,5,2,true); // O'
+	LC2.setLed(0,5,6,true); // C
+	LC2.setLed(0,5,1,true);	// L
+	LC2.setLed(0,4,1,true); // O
+	LC2.setLed(0,1,1,true); // C
+	LC2.setLed(0,0,1,true);	// K
 }
 void W_TO() {
-	LC1.setLed(0,6,2,true); // T
-	LC1.setLed(0,7,2,true); // O
+	LC1.setLed(0,4,6,true); // T
+	LC1.setLed(0,0,6,true); // O
 }
 
 void W_PAST(){
-	//LC1.setRow(0,0,B11110000); // PAST
-	LC1.setLed(0,4,0,true); // P
-	LC1.setLed(0,4,1,true); // A
-	LC1.setLed(0,4,2,true); // S
-	LC1.setLed(0,4,3,true); // T
+	LC1.setRow(0,1,B10011100); // PAST
+	//Not sure why the setLed method was used originally
+        //LC1.setLed(0,4,0,true); // P
+	//LC1.setLed(0,4,1,true); // A
+	//LC1.setLed(0,4,2,true); // S
+	//LC1.setLed(0,4,3,true); // T
 }
 
 void H_ONE(){
-	LC2.setRow(0,0,B11100000); // ONE
+	LC2.setRow(0,6,B10010100); // ONE
 }
 
 void H_TWO(){
-	LC2.setLed(0,5,4,true); // T
-	LC2.setLed(0,6,4,true); // W
-	LC2.setLed(0,7,4,true);  // O
+	LC2.setLed(0,4,7,true); // T
+	LC2.setLed(0,1,7,true); // W
+	LC2.setLed(0,0,7,true);  // O
 }
 void H_THREE(){
-	LC2.setRow(0,0,B00000011); // TH
-	LC2.setLed(0,5,5, true); //R
-	LC2.setLed(0,6,5, true); //E
-	LC2.setLed(0,7,5, true); //E
+	LC2.setRow(0,6,B01000010); // TH
+	LC2.setLed(0,4,4, true); //R
+	LC2.setLed(0,1,4, true); //E
+	LC2.setLed(0,0,4, true); //E
 }
 void H_FOUR(){
-	LC2.setRow(0,1,B11110000); // FOUR
+	LC2.setRow(0,2,B10011100); // FOUR
 }
 void H_FIVE(){
-	LC2.setRow(0,1,B00001111); // FIVE
+	LC2.setRow(0,2,B01100011); // FIVE
 }
 void H_SIX(){
-	LC2.setRow(0,0,B00011100); // SIX
+	LC2.setRow(0,6,B00101001); // SIX
 }
 void H_SEVEN(){
-	LC2.setRow(0,3,B11111000); // SEVEN...
+	LC2.setRow(0,7,B10011101); // SEVEN...
 }
 
 void H_EIGHT(){
-	LC2.setRow(0,2,B11111000);  //EIGHT...
+	LC2.setRow(0,3,B10011101);  //EIGHT...
 }
 
 void H_NINE(){
-	LC1.setLed(0,4,7,true); // N
-   	LC1.setLed(0,5,1,true); // I
-  	LC1.setLed(0,6,1,true); // N
-  	LC1.setLed(0,7,1,true); // E
+	LC1.setLed(0,1,1,true); // N
+   	LC1.setLed(0,6,1,true); // I
+  	LC1.setLed(0,4,1,true); // N
+  	LC1.setLed(0,0,1,true); // E
 }
 
 void H_TEN(){
-	LC2.setLed(0,4,0,true); // T
-	LC2.setLed(0,4,1,true); // E
-	LC2.setLed(0,4,2,true);	// N
+        LC2.setRow(0,5,B10010100);
+	//LC2.setLed(0,4,0,true); // T
+	//LC2.setLed(0,4,1,true); // E
+	//LC2.setLed(0,4,2,true);	// N
 }
 
 void H_ELEVEN(){
-	LC2.setRow(0,2,B00000111); //ELE
-	LC2.setLed(0,5,3,true); //V
-	LC2.setLed(0,6,3,true); //E
-	LC2.setLed(0,7,3,true); //N
+	LC2.setRow(0,3,B01100010); //ELE
+	LC2.setLed(0,4,2,true); //V
+	LC2.setLed(0,1,2,true); //E
+	LC2.setLed(0,0,2,true); //N
 }
 void H_TWELVE(){
-	LC2.setRow(0,3,B00000111); // TWE
-	LC2.setLed(0,5,2,true); //L
-	LC2.setLed(0,6,2,true); //V
-	LC2.setLed(0,7,2,true); //E
+	LC2.setRow(0,7,B01100010); // TWE
+	LC2.setLed(0,4,6,true); //L
+	LC2.setLed(0,1,6,true); //V
+	LC2.setLed(0,0,6,true); //E
 }
 
 void P_ONE() {
-    LC1.setLed(0,5,0,true); // top left
+    LC1.setLed(0,0,0,true); // top left
 }
 void P_TWO() {
-	LC1.setLed(0,5,7,true); // top right
+	LC1.setLed(0,4,0,true); // top right
 }
 void P_THREE() {
-	LC2.setLed(0,5,7,true);// bottom right
+	LC2.setLed(0,0,3,true);// bottom right
 
 }
 void P_FOUR() {
-	LC2.setLed(0,5,0,true); // bottom left
+	LC2.setLed(0,1,3,true); // bottom left
 }
 
 
 // SECONDS COUNTER MODE
 void L_ZERO(){
-	LC1.setRow(0,2,B01110000);
-	LC1.setRow(0,3,B10001000);
-	LC1.setRow(0,4,B10011000);
-	LC2.setRow(0,0,B10101000);
-	LC2.setRow(0,1,B11001000);
-	LC2.setRow(0,2,B10001000);
-	LC2.setRow(0,3,B01110000);
+        LC1.setLed(0,7,5,true);
+        LC1.setLed(0,7,0,true);
+        LC1.setLed(0,7,4,true);
+        LC1.setLed(0,5,3,true);
+        LC1.setLed(0,1,3,true);
+        LC1.setLed(0,5,7,true);
+        LC1.setLed(0,1,4,true);
+        LC1.setLed(0,1,7,true);
+        
+        LC2.setLed(0,6,3,true);
+        LC2.setLed(0,6,0,true);
+        LC2.setLed(0,6,7,true);
+
+        LC2.setLed(0,2,3,true);
+        LC2.setLed(0,2,5,true);
+        LC2.setLed(0,2,7,true);
+        LC2.setLed(0,3,3,true);
+        LC2.setLed(0,3,7,true);
+        LC2.setLed(0,7,5,true);
+        LC2.setLed(0,7,0,true);
+        LC2.setLed(0,7,4,true);
 }
 
 void L_ONE(){
-	LC1.setRow(0,2,B00100000);
-	LC1.setRow(0,3,B01100000);
-	LC1.setRow(0,4,B00100000);
-	LC2.setRow(0,0,B00100000);
-	LC2.setRow(0,1,B00100000);
-	LC2.setRow(0,2,B00100000);
-	LC2.setRow(0,3,B01110000);
+        LC1.setLed(0,7,0,true);
+        LC1.setLed(0,5,5,true);
+        LC1.setLed(0,5,0,true);
+        LC1.setLed(0,1,0,true);
+        LC2.setLed(0,6,0,true);
+        LC2.setLed(0,2,0,true);
+        LC2.setLed(0,3,0,true);
+        LC2.setLed(0,7,5,true);
+        LC2.setLed(0,7,0,true);
+        LC2.setLed(0,7,4,true);
+
 }
 void L_TWO(){
-	LC1.setRow(0,2,B01110000);
-	LC1.setRow(0,3,B10001000);
-	LC1.setRow(0,4,B00001000);
-	LC2.setRow(0,0,B00010000);
-	LC2.setRow(0,1,B00100000);
-	LC2.setRow(0,2,B01000000);
-	LC2.setRow(0,3,B11111000);
+        LC1.setLed(0,7,5,true);
+        LC1.setLed(0,7,0,true);
+        LC1.setLed(0,7,4,true);
+        LC1.setLed(0,5,3,true);
+        LC1.setLed(0,5,7,true);
+        LC1.setLed(0,1,7,true);
+        LC2.setLed(0,6,4,true);
+        LC2.setLed(0,2,0,true);
+        LC2.setLed(0,3,5,true);
+        LC2.setLed(0,7,3,true);
+        LC2.setLed(0,7,5,true);
+        LC2.setLed(0,7,0,true);
+        LC2.setLed(0,7,4,true);
+        LC2.setLed(0,7,7,true);
+        
 }
 void L_THREE(){
-	LC1.setRow(0,2,B11111000);
-	LC1.setRow(0,3,B00010000);
-	LC1.setRow(0,4,B00100000);
-	LC2.setRow(0,0,B00010000);
-	LC2.setRow(0,1,B00001000);
-	LC2.setRow(0,2,B10001000);
-	LC2.setRow(0,3,B01110000);
+        LC1.setLed(0,7,3,true);
+        LC1.setLed(0,7,5,true);
+        LC1.setLed(0,7,0,true);
+        LC1.setLed(0,7,4,true);
+        LC1.setLed(0,7,7,true);
+        LC1.setLed(0,5,4,true);
+        LC1.setLed(0,1,0,true);
+        LC2.setLed(0,6,4,true);
+        LC2.setLed(0,2,7,true);
+        LC2.setLed(0,3,7,true);
+        LC2.setLed(0,3,3,true);
+        LC2.setLed(0,7,5,true);
+        LC2.setLed(0,7,0,true);
+        LC2.setLed(0,7,4,true);
 }
 void L_FOUR(){
-	LC1.setRow(0,2,B00010000);
-	LC1.setRow(0,3,B00110000);
-	LC1.setRow(0,4,B01010000);
-	LC2.setRow(0,0,B10010000);
-	LC2.setRow(0,1,B11111000);
-	LC2.setRow(0,2,B00010000);
-	LC2.setRow(0,3,B00010000);
+        LC1.setLed(0,7,4,true);
+        LC1.setLed(0,5,0,true);
+        LC1.setLed(0,5,4,true);
+        LC1.setLed(0,1,5,true);
+        LC1.setLed(0,1,4,true);
+        LC2.setLed(0,6,3,true);
+        LC2.setLed(0,6,4,true);
+        LC2.setLed(0,2,3,true);
+        LC2.setLed(0,2,5,true);
+        LC2.setLed(0,2,0,true);
+        LC2.setLed(0,2,4,true);
+        LC2.setLed(0,2,7,true);
+        LC2.setLed(0,3,4,true);
+        LC2.setLed(0,7,4,true);
+    
 }
 void L_FIVE(){
-	LC1.setRow(0,2,B11111000);
-	LC1.setRow(0,3,B10000000);
-	LC1.setRow(0,4,B10000000);
-	LC2.setRow(0,0,B11110000);
-	LC2.setRow(0,1,B00001000);
-	LC2.setRow(0,2,B10001000);
-	LC2.setRow(0,3,B01110000);
+        LC1.setLed(0,7,3,true);
+        LC1.setLed(0,7,5,true);
+        LC1.setLed(0,7,0,true);
+        LC1.setLed(0,7,4,true);
+        LC1.setLed(0,7,7,true);
+        LC1.setLed(0,5,3,true);
+        LC1.setLed(0,1,3,true);
+        LC2.setLed(0,6,3,true);
+        LC2.setLed(0,6,5,true);
+        LC2.setLed(0,6,0,true);
+        LC2.setLed(0,6,4,true);
+        LC2.setLed(0,2,7,true);
+        LC2.setLed(0,3,7,true);
+        LC2.setLed(0,3,3,true);
+        LC2.setLed(0,7,5,true);
+        LC2.setLed(0,7,0,true);
+        LC2.setLed(0,7,4,true);
+        
 }
 void R_ZERO(){
-	LC1.setColumn(0,6,B00011000);
-	LC1.setLed(0,2,7,true);
-        LC1.setLed(0,5,3,true);
-	LC1.setRow(0,6,B01010000);
-	LC1.setRow(0,7,B01100000);
-	LC2.setColumn(0,6,B11100000);
-	LC2.setColumn(0,7,B01010000);
-	LC2.setRow(0,5,B00100100);
-	LC2.setRow(0,6,B00100000);
-        LC2.setRow(0,7,B00011100);
+        LC1.setLed(0,7,1,true);
+        LC1.setLed(0,6,2,true);
+        LC1.setLed(0,4,2,true);
+        LC1.setLed(0,5,6,true);
+        LC1.setLed(0,0,6,true);
+        LC1.setLed(0,1,6,true);
+        LC1.setLed(0,4,1,true);
+        LC1.setLed(0,0,1,true);
+        LC2.setLed(0,6,6,true);
+        LC2.setLed(0,4,4,true);
+        LC2.setLed(0,0,4,true);
+        LC2.setLed(0,2,6,true);
+        LC2.setLed(0,2,1,true);
+        LC2.setLed(0,0,7,true);
+        LC2.setLed(0,3,6,true);
+        LC2.setLed(0,0,2,true);
+        LC2.setLed(0,7,1,true);
+        LC2.setLed(0,4,6,true);
+        LC2.setLed(0,1,6,true);
+        
+
 }
 void R_ONE(){
-	LC1.setLed(0,3,7,true);
-	LC1.setRow(0,5,B01110000);
-	LC2.setRow(0,5,B00111100);
-	LC2.setLed(0,3,7,true);
-	LC2.setLed(0,6,2,true);
+        LC1.setLed(0,6,2,true);
+        LC1.setLed(0,6,6,true);
+        LC1.setLed(0,5,1,true);
+        LC1.setLed(0,6,1,true);
+        LC2.setLed(0,4,4,true);
+        LC2.setLed(0,4,7,true);
+        LC2.setLed(0,4,2,true);
+        LC2.setLed(0,7,1,true);
+        LC2.setLed(0,4,6,true);
+        LC2.setLed(0,1,6,true);
+        
 }
 void R_TWO(){
-	LC1.setLed(0,3,6,true);
-	LC1.setLed(0,2,7,true);
-	LC1.setLed(0,5,3,true);
-	LC1.setLed(0,6,3,true);
-	LC1.setRow(0,7,B01100000);
-	
-	LC2.setLed(0,3,6,true);
-	LC2.setColumn(0,7,B00110000);
-	LC2.setRow(0,5,B00101000);
-	LC2.setRow(0,6,B00100100);
-	LC2.setLed(0,7,2,true);
+        LC1.setLed(0,7,1,true);
+        LC1.setLed(0,6,2,true);
+        LC1.setLed(0,4,2,true);
+        LC1.setLed(0,5,6,true);
+        LC1.setLed(0,0,6,true);
+        LC1.setLed(0,0,1,true);
+        LC2.setLed(0,1,4,true);
+        LC2.setLed(0,4,7,true);
+        LC2.setLed(0,3,1,true);
+        LC2.setLed(0,7,6,true);
+        LC2.setLed(0,7,1,true);
+        LC2.setLed(0,4,6,true);
+        LC2.setLed(0,1,6,true);
+        LC2.setLed(0,0,6,true);
 }
 
 void R_THREE(){
-	LC1.setLed(0,2,6,true);
-	LC1.setLed(0,2,7,true);
-	LC1.setRow(0,5,B01010000);
-	LC1.setRow(0,6,B00110000);
-	LC1.setLed(0,7,3,true);
-
-	LC2.setLed(0,2,6,true);
-	LC2.setLed(0,3,7,true);
-	LC2.setLed(0,5,2,true);
-	LC2.setRow(0,6,B00100100);
-	LC2.setRow(0,7,B00011000);
+        LC1.setLed(0,7,6,true);
+        LC1.setLed(0,7,1,true);
+        LC1.setLed(0,6,2,true);
+        LC1.setLed(0,4,2,true);
+        LC1.setLed(0,0,2,true);
+        LC1.setLed(0,4,6,true);
+        LC1.setLed(0,6,1,true);
+        
+        LC2.setLed(0,1,4,true);
+        LC2.setLed(0,0,7,true);
+        LC2.setLed(0,3,6,true);
+        LC2.setLed(0,0,2,true);
+        LC2.setLed(0,7,1,true);
+        LC2.setLed(0,4,6,true);
+        LC2.setLed(0,1,6,true);
 }
 
 void R_FOUR(){
-	LC1.setLed(0,4,7,true);
-	LC1.setLed(0,5,2,true);
-	LC1.setRow(0,6,B01110000);
-	
-	LC2.setColumn(0,6,B11000000);
-	LC2.setLed(0,1,7,true);
-	LC2.setLed(0,5,4,true);
-	LC2.setRow(0,6,B00111100);
-	LC2.setLed(0,7,4,true);
+        LC1.setLed(0,4,2,true);
+        LC1.setLed(0,6,6,true);
+        LC1.setLed(0,4,6,true);
+        LC1.setLed(0,1,1,true);
+        LC1.setLed(0,4,1,true);
+        
+        LC2.setLed(0,6,6,true);
+        LC2.setLed(0,1,4,true);
+        LC2.setLed(0,2,6,true);
+        LC2.setLed(0,2,1,true);
+        LC2.setLed(0,4,7,true);
+        LC2.setLed(0,1,7,true);
+        LC2.setLed(0,0,7,true);
+        LC2.setLed(0,1,2,true);
+        LC2.setLed(0,1,6,true);
 }
 
 void R_FIVE(){
-	LC1.setColumn(0,6,B00111000);
-	LC1.setLed(0,2,7,true);
-	LC1.setLed(0,5,3,true);
-	LC1.setLed(0,6,3,true);
-	LC1.setLed(0,7,3,true);
-	
-	LC2.setColumn(0,6,B10100000);
-	LC2.setColumn(0,7,B10010000);
-	LC2.setRow(0,5,B00100100);
-	LC2.setRow(0,6,B00100100);
-	LC2.setRow(0,7,B00011000);
+        LC1.setLed(0,7,6,true);
+        LC1.setLed(0,7,1,true);
+        LC1.setLed(0,6,2,true);
+        LC1.setLed(0,4,2,true);
+        LC1.setLed(0,0,2,true);
+        LC1.setLed(0,5,6,true);
+        LC1.setLed(0,1,6,true);
+        
+        LC2.setLed(0,6,6,true);
+        LC2.setLed(0,6,1,true);
+        LC2.setLed(0,4,4,true);
+        LC2.setLed(0,1,4,true);
+        LC2.setLed(0,0,7,true);
+        LC2.setLed(0,0,2,true);
+        LC2.setLed(0,3,6,true);
+        LC2.setLed(0,7,1,true);
+        LC2.setLed(0,4,6,true);
+        LC2.setLed(0,1,6,true);
 }
 
 void R_SIX(){
-	LC1.setLed(0,4,6,true);
-	LC1.setLed(0,3,7,true);
-	LC1.setLed(0,5,3,true);
-	LC1.setLed(0,6,3,true);
-	
-	LC2.setColumn(0,6,B11100000);
-	LC2.setColumn(0,7,B10010000);
-	LC2.setRow(0,5,B00100100);
-	LC2.setRow(0,6,B00100100);
-	LC2.setRow(0,7,B00011000);	
+        LC1.setLed(0,6,2,true);
+        LC1.setLed(0,4,2,true);
+        LC1.setLed(0,5,1,true);
+        LC1.setLed(0,1,6,true);
+        
+        LC2.setLed(0,6,6,true);
+        LC2.setLed(0,6,1,true);
+        LC2.setLed(0,4,4,true);
+        LC2.setLed(0,1,4,true);
+        LC2.setLed(0,2,6,true);
+        LC2.setLed(0,0,7,true);
+        LC2.setLed(0,3,6,true);
+        LC2.setLed(0,0,2,true);
+        LC2.setLed(0,7,1,true);
+        LC2.setLed(0,4,6,true);
+        LC2.setLed(0,1,6,true);
 }
 
 void R_SEVEN(){
-	LC1.setLed(0,2,6,true);
-	LC1.setLed(0,2,7,true);
-	LC1.setLed(0,5,3,true);
-	LC1.setRow(0,6,B01010000);
-	LC1.setRow(0,7,B00110000);
-	
-	LC2.setColumn(0,7,B01110000);
-	LC2.setLed(0,5,5,true);
+        LC1.setLed(0,7,6,true);
+        LC1.setLed(0,7,1,true);
+        LC1.setLed(0,6,2,true);
+        LC1.setLed(0,4,2,true);
+        LC1.setLed(0,0,2,true);
+        LC1.setLed(0,0,6,true);
+        LC1.setLed(0,4,1,true);
+        
+        LC2.setLed(0,4,4,true);
+        LC2.setLed(0,2,1,true);
+        LC2.setLed(0,3,1,true);
+        LC2.setLed(0,7,1,true);
+
 }
 
 void R_EIGHT(){
-	LC1.setColumn(0,6,B00011000);
-	LC1.setLed(0,2,7,true);
-	LC1.setLed(0,5,3,true);
-	LC1.setLed(0,6,3,true);
-	LC1.setRow(0,7,B01100000);
-	
-	LC2.setColumn(0,6,B01100000);
-	LC2.setColumn(0,7,B10010000);
-	LC2.setRow(0,5,B00100100);
-	LC2.setRow(0,6,B00100100);
-	LC2.setRow(0,7,B00011000);	
+        LC1.setLed(0,7,1,true);
+        LC1.setLed(0,6,2,true);
+        LC1.setLed(0,4,2,true);
+        LC1.setLed(0,5,6,true);
+        LC1.setLed(0,0,6,true);
+        LC1.setLed(0,1,6,true);
+        LC1.setLed(0,0,1,true);
+        
+        LC2.setLed(0,6,1,true);
+        LC2.setLed(0,4,4,true);
+        LC2.setLed(0,1,4,true);
+        LC2.setLed(0,2,6,true);
+        LC2.setLed(0,0,7,true);
+        LC2.setLed(0,3,6,true);
+        LC2.setLed(0,0,2,true);
+        LC2.setLed(0,7,1,true);
+        LC2.setLed(0,4,6,true);
+        LC2.setLed(0,1,6,true);
 }
 
 void R_NINE(){
-	LC1.setColumn(0,6,B00011000);
-	LC1.setLed(0,2,7,true);
-	LC1.setLed(0,5,3,true);
-	LC1.setLed(0,6,3,true);
-	LC1.setRow(0,7,B01100000);
-	
-	LC2.setColumn(0,7,B10010000);
-	LC2.setRow(0,5,B00100100);
-	LC2.setRow(0,6,B00010100);
-	LC2.setRow(0,7,B00001100);
+        LC1.setLed(0,7,1,true);
+        LC1.setLed(0,6,2,true);
+        LC1.setLed(0,4,2,true);
+        LC1.setLed(0,5,6,true);
+        LC1.setLed(0,0,6,true);
+        LC1.setLed(0,1,6,true);
+        LC1.setLed(0,0,1,true);
+        
+        LC2.setLed(0,6,1,true);
+        LC2.setLed(0,4,4,true);
+        LC2.setLed(0,1,4,true);
+        LC2.setLed(0,0,4,true);
+        LC2.setLed(0,0,7,true);
+        LC2.setLed(0,1,2,true);
+        LC2.setLed(0,4,6,true);
+        LC2.setLed(0,7,1,true);
 }
 
 // for dot mode - clear the 4 dots only.
@@ -808,12 +1257,12 @@ void P_CLEAR() {
 
 
 
-/* 
+ 
 
 void vocabSingleTest() {
-	int dly = 800;
+	int dly = 2000;
 	LED_CLEAR();
-
+/*
 	W_ITIS();
 	delay(dly); LED_CLEAR();
 	M_AQUARTER();
@@ -932,7 +1381,7 @@ void vocabSingleTest() {
 	L_ZERO();
 	R_NINE();
 	delay(dly); LED_CLEAR();
-
+*/
 }
 
 void glowTest() {
@@ -951,4 +1400,5 @@ void glowTest() {
     }
 }
 
-*/
+
+
